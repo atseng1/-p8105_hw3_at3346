@@ -1,0 +1,22 @@
+---
+title: "p8105_hw3_at3346"
+author: "Ashley Tseng"
+date: "10/14/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(p8105.datasets)
+
+```
+
+## Problem 1
+
+Load data:
+```{r}
+data("instacart")
+```
+
