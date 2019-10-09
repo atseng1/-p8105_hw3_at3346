@@ -58,6 +58,20 @@ n_ordered = n_aisle %>%
 n_ordered
 ```
 
+```{r table1}
+instacart =
+  filter(
+    aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits" 
+  ) %>% 
+  mutate(
+    pop_items = 
+  )
+  knitr::kable()
+```
+
+```{r table2}
+
+```
 
 
 ## Problem 2
