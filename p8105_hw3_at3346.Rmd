@@ -6,17 +6,119 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
 library(tidyverse)
 library(p8105.datasets)
+library(ggplot2)
+library(viridis)
 
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
 ## Problem 1
 
 Load data:
+```{r problem 1.1}
+data("instacart") 
+
+n_aisle = instacart %>% 
+  count(aisle) %>% 
+  View
+```
+The `instacart` dataset contains `r nrow(instacart)` observations (representing products from orders) of 131,209 unique users and `r ncol(instacart)` variables. There is a single order per user in this dataset. Key variables in the `instacart` dataset include `reordered`, which describes if this product has been ordered by this user in the past,`order_dow`, which describes the day of the week on which the order was placed, and
+`order_hour_of_day`, which describes the hour of the day on which the order was placed. 
+
+There are 134 aisles. The aisles that the most items are ordered from are "fresh vegetables" (150,609 orders) and "fresh fruit" (150,473 orders).
+
+```{r plot1}
+n_ordered = n_aisle %>% 
+  filter(n > 10000) %>% 
+  ggplot(aes(x = aisle, y = n, color = aisle)) +
+  geom_point() +
+  labs(
+    title = "Number of items ordered in each aisle",
+    x = "Aisle name",
+    y = "Number of items ordered") +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    legend.position = "none")
+
+n_ordered
+```
+
+
+
+## Problem 2
+
+Data cleaning:
+```{r problem2.1}
+data("brfss_smart2010") 
+
+brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(
+    topic == "Overall Health",
+    response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor"
+    ) %>% 
+  mutate(
+    response = ordered(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))
+  ) %>% 
+  View
+```
+
+In 2002, which states were observed at 7 or more locations? What about in 2010?
+```{r problem 2.2}
+brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(
+    topic == "Overall Health",
+    response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor",
+    year == "2002"
+    ) %>% 
+  mutate(
+    response = ordered(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))
+  ) %>% 
+  pivot_wider(
+    names_from = locationdesc,
+    values_from = childs_first_name
+    ) %>% 
+  View
+
+
+  separate(locationdesc, into = c("state", "county"), sep="-") %>% 
+  select(-c("state")) %>% 
+  View
+  group_by(locationabbr, county) %>% 
+  count(locationabbr) %>%
+  View
+```
+In 2002, 
+
+
+## Problem 3
 ```{r}
-data("instacart")
+brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  mutate(avgval_loc = average(data_value)) %>% 
+  filter(
+    topic == "Overall Health",
+    response == "Excellent"
+    ) %>% 
+  select(year, state, avgval_loc) %>% 
+  ggplot(aes(x = rank, y = count)) + 
+  geom_point() +
+  geom_line()
 ```
 
