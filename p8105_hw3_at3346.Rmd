@@ -162,12 +162,12 @@ accel_data =
   select(week, day_id, day, weekend, weekday, everything()) %>% 
   pivot_longer(
     cols = starts_with("activity_"),
-    names_to = "activity_number",
+    names_to = "activity_minute_num",
     names_prefix = "activity_",
-    values_to = "act_count_min"
+    values_to = "activity_counts"
   )
 ```
-The `accel_data` dataset contains `r nrow(accel_data)` observations and `r ncol(accel_data)` variables. The `r ncol(accel_data)` variables in the dataset are `week`, `day_id`, `day`, `weekend`, `weekday`, `activity_number`, and `act_count_min`.
+The `accel_data` dataset contains `r nrow(accel_data)` observations and `r ncol(accel_data)` variables. The `r ncol(accel_data)` variables in the dataset are `week`, `day_id`, `day`, `weekend`, `weekday`, `activity_minute_num`, and `activity_counts`.
 
 DONE?
 
@@ -180,23 +180,50 @@ tot_act =
     week = ordered(week, c("1", "2", "3", "4", "5"))
     ) %>% 
   group_by(week, day_id, day) %>% 
-  summarize (total_min = sum(act_count_min)) %>%
-  View
+  summarize (total_min = sum(activity_counts)) %>%
   knitr::kable()
 
 
-tot_act %>% 
+trends_wk = tot_act %>% 
   ggplot(aes(x = day, y = total_min, color = week)) + 
   geom_point() +
-  facet_grid(~week)
+  geom_smooth(se = FALSE) +
+  facet_grid(~week) +
+  labs(
+    title = "Total daily activity over 5 weeks",
+    x = "Day of the week",
+    y = "Total activity per day (min)"
+    ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+trends_day = tot_act %>% 
+  ggplot(aes(x = week, y = total_min, color = day)) + 
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_grid(~day) +
+  labs(
+    title = "Total daily activity over 5 weeks",
+    x = "Week",
+    y = "Total activity per day (min)"
+    ) 
 ```
+Overall, there doesn't seem to be any trends apparent. For weeks 1 and 2, the total activity per day (in minutes) is lowest on Mondays, then gradually increases throughout the week into the weekend. In week 3, the total activity per day (in minutes) remains relatively consistent on all days of the week except for Monday, which has the highest total daily activity. For weeks 4 and 5, there is the lowest total daily activity on the weekends.
+
 NOT DONE
 
 
 ```{r prob3.plot1}
 accel_data %>% 
-  ggplot(aes(x = , y = )) + 
+  ggplot(aes(x = activity_minute_num, y = activity_counts, color = day)) + 
   geom_point() +
-  geom_line()
+  geom_smooth() +
+  labs(
+    title = "24-hour activity time courses for each day of the week over a 5-week period",
+    x = "Minute Number",
+    y = "Total activity count"
+    ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_x_continuous(
+    breaks = c(1)
 ```
 NOT DONE
