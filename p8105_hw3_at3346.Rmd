@@ -12,6 +12,7 @@ library(ggplot2)
 library(viridis)
 library(readxl)
 library(dplyr)
+library(leaflet)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -175,7 +176,7 @@ spaghetti
 
 
 ```{r prob2.plot2}
-two_panel = brfss_smart2010 %>% 
+two_panel_scat = brfss_smart2010 %>% 
   janitor::clean_names() %>% 
   filter(
     response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor",
@@ -187,16 +188,75 @@ two_panel = brfss_smart2010 %>%
   group_by(year, county, response) %>% 
   mutate(avg_dv = mean(data_value)) %>% 
   select(year, state, county, response, avg_dv) %>% 
-  ggplot(aes(x = response, y = avg_dv, color = )) + 
+  ggplot(aes(x = county, y = avg_dv, color = response)) + 
   geom_point() +
+  stat_smooth() +
+  facet_grid(~year) +
+  labs(
+    title = "Distribution of Data Values For Responses Among Locations in NY State",
+    x = "County in NY",
+    y = "Average Data Value",
+    color = "Response") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.spacing = unit(1, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, size = 0.75))
+
+two_panel_scat
+
+
+two_panel_hist = brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(
+    response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor",
+    year == "2006" | year == "2010",
+    locationabbr == "NY") %>% 
+  mutate(response = ordered(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))) %>% 
+  separate(locationdesc, into = c("state", "county"), sep="-") %>% 
+  select(-c("locationabbr")) %>% 
+  group_by(year, county, response) %>% 
+  mutate(avg_dv = mean(data_value)) %>% 
+  select(year, state, county, response, avg_dv) %>% 
+  ggplot(aes(avg_dv, fill = response)) + 
+  geom_histogram(binwidth = 1) +
   facet_grid(~year) +
   labs(
     title = "Distribution of Data Values For Responses Among Locations in NY State",
     x = "Response",
     y = "Average Data Value") +
   theme(plot.title = element_text(hjust = 0.5))
-    
-two_panel
+
+two_panel_hist
+
+
+pal <- colorFactor(
+  palette = "viridis",
+  domain = two_panel_lf$response)
+
+two_panel_lf = brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(
+    response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor",
+    year == "2006" | year == "2010",
+    locationabbr == "NY") %>% 
+  mutate(response = ordered(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))) %>% 
+  separate(locationdesc, into = c("state", "county"), sep = "-") %>% 
+  mutate(geo_location = gsub("[()]", "", geo_location)) %>% 
+  separate(geo_location, into = c("lat", "long"), sep = ",") %>% 
+  mutate(lat = as.numeric(lat),
+         long = as.numeric(long)) %>% 
+  select(-c("locationabbr")) %>% 
+  group_by(year, county, response) %>% 
+  mutate(avg_dv = mean(data_value)) %>% 
+  select(year, state, county, response, avg_dv, lat, long) %>% 
+  addTiles() %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addCircleMarkers( ~long, 
+                    ~lat, 
+                    radius = 1, 
+                    color = ~pal(response)) %>% 
+
+two_panel_lf
 ```
 
 
