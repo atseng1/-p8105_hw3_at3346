@@ -11,8 +11,7 @@ library(p8105.datasets)
 library(ggplot2)
 library(viridis)
 library(readxl)
-library(formattable)
-library(data.table)
+library(dplyr)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -35,10 +34,10 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 Load data:
 ```{r problem 1.1}
 data("instacart") 
+force(instacart)
 
 n_aisle = instacart %>% 
-  count(aisle) %>% 
-  View
+  count(aisle)
 ```
 The `instacart` dataset contains `r nrow(instacart)` observations (representing products from orders) of 131,209 unique users and `r ncol(instacart)` variables. There is a single order per user in this dataset. Key variables in the `instacart` dataset include `reordered`, which describes if this product has been ordered by this user in the past,`order_dow`, which describes the day of the week on which the order was placed, and
 `order_hour_of_day`, which describes the hour of the day on which the order was placed. 
@@ -56,33 +55,31 @@ n_ordered = n_aisle %>%
     y = "Number of items ordered") +
   theme(
     axis.text.x = element_text(angle = 90, hjust = 1),
-    legend.position = "none")
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5))
 
 n_ordered
 ```
 DONE
 
+First we want to take the count of the product names (how many times each item is ordered), then rank the product names based on their total count:
 ```{r prob1.table1}
 table_popitems = instacart %>% 
-  filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits")
-  
-popitems = data.table(table_popitems, key=c("product_name"))
-popitems[, tail(.SD, 3), by = product_name] 
-
-
-  tail(names(sort(table("product_name"))), 1) %>% 
-  
-  group_by(aisle, product_name) %>%
-  summarize(n_timesord = round(count(product_name), digits = 2)) %>%
-  pivot_wider(
-    names_from = product_name,
-    values_from = n_timesord
-  ) %>% 
+  filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>%
+  group_by(aisle) %>%
+  count(product_name, name = "n_prod") %>% 
+  filter(dense_rank(desc(n_prod)) < 4) %>% 
+  arrange(desc(n_prod)) %>% 
+  rename (
+  "Aisle" = aisle,
+  "Product Name" = product_name,
+  "Number of Times Ordered" = n_prod) %>% 
   knitr::kable()
 ```
-NOT DONE
+DONE
 
-```{r table2}
+
+```{r prob1.table2}
 table_meanhr = instacart %>% 
   filter(product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream") %>% 
   mutate(
@@ -96,15 +93,19 @@ table_meanhr = instacart %>%
     names_from = order_dow,
     values_from = mean_hrordered
   ) %>% 
+  rename ("Product Name" = product_name) %>% 
   knitr::kable()
 ```
 DONE
 
+
+
 ## Problem 2
 
 Data cleaning:
-```{r problem2.1}
+```{r prob2.1}
 data("brfss_smart2010") 
+force(brfss_smart2010)
 
 brfss_smart2010 %>% 
   janitor::clean_names() %>% 
@@ -114,38 +115,90 @@ brfss_smart2010 %>%
     ) %>% 
   mutate(
     response = ordered(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))
-  ) %>% 
-  View
+  )
 ```
 DONE
 
-In 2002, which states were observed at 7 or more locations? What about in 2010?
-```{r problem2.2}
-brfss_smart2010 %>% 
+
+```{r prob2.2}
+seven_2002 = brfss_smart2010 %>% 
   janitor::clean_names() %>% 
   filter(
     topic == "Overall Health",
     response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor",
-    year == "2002"
-    ) %>% 
-  mutate(
-    response = ordered(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))
-  ) %>% 
-  pivot_wider(
-    names_from = locationdesc,
-    values_from = childs_first_name
-    ) %>% 
-  View
-
-
+    year == "2002") %>% 
+  mutate(response = ordered(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))) %>% 
   separate(locationdesc, into = c("state", "county"), sep="-") %>% 
-  select(-c("state")) %>% 
-  View
-  group_by(locationabbr, county) %>% 
-  count(locationabbr) %>%
-  View
+  select(-c("locationabbr")) %>% 
+  group_by(state) %>%
+  count(county, name = "n_loc") %>% 
+  filter(n_loc > 6) %>% 
+  arrange(desc(n_loc))
+
+
+seven_2010 = brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(
+    topic == "Overall Health",
+    response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor",
+    year == "2010") %>% 
+  mutate(response = ordered(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))) %>% 
+  
+    
 ```
-NOT DONE
+In 2002, CT, FL, MA, NC, NJ, and PA were observed at 7 or more locations. 
+In 2010, CA, CO, FL, MD, NC, NE, NJ, NY, OH, PA, SC, TX, and WA were observed at 7 or more locations. 
+
+CODE NOT WORKING.
+
+
+```{r prob2.3.plot1}
+spaghetti = brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(response == "Excellent") %>% 
+  group_by(year, locationabbr) %>% 
+  mutate(avg_dv = mean(data_value)) %>% 
+  select(year, locationabbr, avg_dv) %>% 
+  rename("State" = locationabbr) %>% 
+  ggplot(aes(x = year, y = avg_dv, color = State)) + 
+  geom_line() +
+  labs(
+    title = "Average Data Value Over Time Across Locations Within A State",
+    x = "Year",
+    y = "Average Data Value") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom")
+
+spaghetti
+```
+
+
+```{r prob2.plot2}
+two_panel = brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(
+    response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor",
+    year == "2006" | year == "2010",
+    locationabbr == "NY") %>% 
+  mutate(response = ordered(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))) %>% 
+  separate(locationdesc, into = c("state", "county"), sep="-") %>% 
+  select(-c("locationabbr")) %>% 
+  group_by(year, county, response) %>% 
+  mutate(avg_dv = mean(data_value)) %>% 
+  select(year, state, county, response, avg_dv) %>% 
+  ggplot(aes(x = response, y = avg_dv, color = )) + 
+  geom_point() +
+  facet_grid(~year) +
+  labs(
+    title = "Distribution of Data Values For Responses Among Locations in NY State",
+    x = "Response",
+    y = "Average Data Value") +
+  theme(plot.title = element_text(hjust = 0.5))
+    
+two_panel
+```
+
 
 
 ## Problem 3
@@ -157,15 +210,13 @@ accel_data =
   janitor::clean_names() %>%
   mutate(
     weekend = recode(day, "Saturday" = 1, "Sunday" = 1, "Monday" = 0, "Tuesday" = 0, "Wednesday" = 0, "Thursday" = 0, "Friday" = 0),
-    weekday = recode(day, "Saturday" = 0, "Sunday" = 0, "Monday" = 1, "Tuesday" = 1, "Wednesday" = 1, "Thursday" = 1, "Friday" = 1)
-         ) %>% 
+    weekday = recode(day, "Saturday" = 0, "Sunday" = 0, "Monday" = 1, "Tuesday" = 1, "Wednesday" = 1, "Thursday" = 1, "Friday" = 1)) %>% 
   select(week, day_id, day, weekend, weekday, everything()) %>% 
   pivot_longer(
     cols = starts_with("activity_"),
     names_to = "activity_minute_num",
     names_prefix = "activity_",
-    values_to = "activity_counts"
-  )
+    values_to = "activity_counts")
 ```
 The `accel_data` dataset contains `r nrow(accel_data)` observations and `r ncol(accel_data)` variables. The `r ncol(accel_data)` variables in the dataset are `week`, `day_id`, `day`, `weekend`, `weekday`, `activity_minute_num`, and `activity_counts`.
 
@@ -173,16 +224,13 @@ DONE?
 
 
 ```{r prob3.table1}
-tot_act = 
-  accel_data %>% 
+tot_act = accel_data %>% 
    mutate(
     day = ordered(day, c("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday")),
-    week = ordered(week, c("1", "2", "3", "4", "5"))
-    ) %>% 
+    week = ordered(week, c("1", "2", "3", "4", "5"))) %>% 
   group_by(week, day_id, day) %>% 
   summarize (total_min = sum(activity_counts)) %>%
   knitr::kable()
-
 
 trends_wk = tot_act %>% 
   ggplot(aes(x = day, y = total_min, color = week)) + 
@@ -192,8 +240,7 @@ trends_wk = tot_act %>%
   labs(
     title = "Total daily activity over 5 weeks",
     x = "Day of the week",
-    y = "Total activity per day (min)"
-    ) +
+    y = "Total activity per day (min)") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 trends_day = tot_act %>% 
@@ -204,26 +251,26 @@ trends_day = tot_act %>%
   labs(
     title = "Total daily activity over 5 weeks",
     x = "Week",
-    y = "Total activity per day (min)"
-    ) 
+    y = "Total activity per day (min)") 
 ```
 Overall, there doesn't seem to be any trends apparent. For weeks 1 and 2, the total activity per day (in minutes) is lowest on Mondays, then gradually increases throughout the week into the weekend. In week 3, the total activity per day (in minutes) remains relatively consistent on all days of the week except for Monday, which has the highest total daily activity. For weeks 4 and 5, there is the lowest total daily activity on the weekends.
 
 NOT DONE
 
-
 ```{r prob3.plot1}
 accel_data %>% 
   ggplot(aes(x = activity_minute_num, y = activity_counts, color = day)) + 
-  geom_point() +
-  geom_smooth() +
+  geom_histogram() +
   labs(
     title = "24-hour activity time courses for each day of the week over a 5-week period",
     x = "Minute Number",
-    y = "Total activity count"
-    ) +
+    y = "Total activity count") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_x_continuous(
-    breaks = c(1)
+    breaks = c(1))
 ```
 NOT DONE
+Need to average the values for each day of the week (average the values for Monday over 5 weeks), etc.
+Lines to show trends?
+Also plot a general trend line over 35 days
+
