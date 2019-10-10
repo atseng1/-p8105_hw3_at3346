@@ -318,8 +318,22 @@ Overall, there doesn't seem to be any trends apparent. For weeks 1 and 2, the to
 NOT DONE
 
 ```{r prob3.plot1}
-accel_data %>% 
+five_scat = accel_data %>% 
   ggplot(aes(x = activity_minute_num, y = activity_counts, color = day)) + 
+  geom_point() +
+  labs(
+    title = "24-hour activity time courses for each day of the week over a 5-week period",
+    x = "Minute Number",
+    y = "Total activity count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_x_continuous(
+    breaks = c(1))
+
+five_scat
+
+
+five_hist = accel_data %>% 
+  ggplot(aes(activity_counts, color = day)) + 
   geom_histogram() +
   labs(
     title = "24-hour activity time courses for each day of the week over a 5-week period",
@@ -328,6 +342,39 @@ accel_data %>%
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_x_continuous(
     breaks = c(1))
+
+five_hist
+
+
+five_line = accel_data %>% 
+  ggplot(aes(x = activity_minute_num, y = activity_counts, group = day)) + 
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "24-hour activity time courses for each day of the week over a 5-week period",
+    x = "Minute Number",
+    y = "Total activity count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+five_line
+
+
+avg_accel_data = accel_data %>% 
+  group_by(day, activity_minute_num) %>% 
+  mutate(avg_ct = mean(activity_counts)) %>% 
+  select(day, activity_minute_num, avg_ct) %>% 
+  ggplot(aes(x = activity_minute_num, y = avg_ct, group = day)) + 
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "24-hour activity time courses for each day of the week over a 5-week period",
+    x = "Minute Number",
+    y = "Total activity count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+avg_accel_data
+
+
 ```
 NOT DONE
 Need to average the values for each day of the week (average the values for Monday over 5 weeks), etc.
