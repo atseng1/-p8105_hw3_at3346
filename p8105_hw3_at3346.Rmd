@@ -30,9 +30,9 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
 
-## Problem 1
+# Problem 1
 
-Load data:
+## Load data:
 ```{r problem 1.1}
 data("instacart") 
 force(instacart)
@@ -50,7 +50,7 @@ The `instacart` dataset contains `r nrow(instacart)` observations (representing 
 There are `r nrow(n_aisle)` total aisles included in the `instacart` dataset. The aisles that the most items are ordered from are "fresh vegetables" (150609 orders) and "fresh fruit" (150473 orders).
 
 
-Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”:
+## Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered:
 ```{r prob1.plot1}
 n_ordered = n_aisle %>% 
   filter(n > 10000) %>% 
@@ -70,7 +70,7 @@ n_ordered
 ```
 
 
-Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week:
+## Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”:
 ```{r prob1.table1}
 table_popitems = instacart %>% 
   filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>%
@@ -87,9 +87,10 @@ table_popitems = instacart %>%
 table_popitems %>% 
   knitr::kable()
 ```
+The three most popular items in each of the aisles are shown in the table in descending order (most popular to least popular).
 
 
-Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week:
+## Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week:
 ```{r prob1.table2}
 table_meanhr = instacart %>% 
   filter(product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream") %>% 
@@ -128,9 +129,9 @@ table_meanhr %>%
 
 
 
-## Problem 2
+# Problem 2
 
-Data cleaning:
+## Data cleaning:
 ```{r prob2.1}
 data("brfss_smart2010") 
 force(brfss_smart2010)
@@ -144,7 +145,7 @@ brfss_smart2010 = brfss_smart2010 %>%
 ```
 
 
-In 2002, which states were observed at 7 or more locations? What about in 2010?
+## In 2002, which states were observed at 7 or more locations? What about in 2010?
 ```{r prob2.2}
 seven_2002 = brfss_smart2010 %>% 
   filter(year == "2002") %>% 
@@ -171,7 +172,7 @@ In 2002, CT, FL, MA, NC, NJ, and PA were observed at 7 or more locations.
 In 2010, CA, CO, FL, MA, MD, NC, NE, NJ, NY, OH, PA, SC, TX, and WA were observed at 7 or more locations. 
 
 
-Make a “spaghetti” plot of this average value over time within a state:
+## Make a “spaghetti” plot of this average value over time within a state:
 ```{r prob2.3.plot1}
 spaghetti = brfss_smart2010 %>% 
   filter(response == "Excellent") %>% 
@@ -195,7 +196,7 @@ spaghetti
 ```
 
 
-Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State:
+## Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State:
 ```{r prob2.plot2}
 two_panel_scat = brfss_smart2010 %>% 
   janitor::clean_names() %>% 
@@ -228,9 +229,9 @@ two_panel_scat
 
 
 
-## Problem 3
+# Problem 3
 
-Load, tidy, and wrangle data:
+## Load, tidy, and wrangle data:
 ```{r problem3.1}
 accel_data = 
   read_csv("./data/accel_data.csv", col_names = TRUE) %>%
@@ -251,17 +252,16 @@ accel_data =
 The `accel_data` dataset contains `r nrow(accel_data)` observations and `r ncol(accel_data)` variables. The `r ncol(accel_data)` variables in the dataset are `week`, `day_id`, `day`, `weekend`, `weekday`, `activity_minute_num`, and `activity_counts`.
 
 
-Aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals:
+## Aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals:
 ```{r prob3.table1}
 tot_act = accel_data %>% 
   group_by(week, day_id, day) %>% 
-  summarize (total_min = sum(activity_counts)) %>%
-  select(week, day_id, day, total_min)
+  summarize (total_min = sum(activity_counts))
 
 knitr::kable(tot_act)
 
 trends_wk = tot_act %>% 
-  ggplot(aes(x = day, y = total_min, color = week)) + 
+  ggplot(aes(x = day, y = total_min, color = week, group = week)) + 
   geom_point() +
   geom_smooth(se = FALSE) +
   facet_grid(~week) +
@@ -271,8 +271,10 @@ trends_wk = tot_act %>%
     y = "Total activity per day (min)") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
+trends_wk
+
 trends_day = tot_act %>% 
-  ggplot(aes(x = week, y = total_min, color = day)) + 
+  ggplot(aes(x = week, y = total_min, color = day, group = day)) + 
   geom_point() +
   geom_smooth(se = FALSE) +
   facet_grid(~day) +
@@ -280,27 +282,28 @@ trends_day = tot_act %>%
     title = "Total daily activity over 5 weeks",
     x = "Week",
     y = "Total activity per day (min)") 
+
+trends_day
+
 ```
 Overall, there doesn't seem to be any trends apparent. If we want to examine for trends by week, for weeks 1 and 2, the total activity per day (in minutes) is lowest on Mondays, then gradually increases throughout the week into the weekend. In week 3, the total activity per day (in minutes) remains relatively consistent on all days of the week except for Monday, which has the highest total daily activity. For weeks 4 and 5, there is the lowest total daily activity on the weekends.
 
 
-Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week:
+## Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week:
 ```{r prob3.plot1}
 avg_accel_data = accel_data %>% 
-  group_by(week, day_id, day) %>% 
+  group_by(day_id, day, activity_minute_num) %>% 
   summarize(avg_ct = mean(activity_counts)) %>% 
-  ggplot(aes(x = day_id, y = avg_ct, color = day)) + 
-  geom_line() +
+  ggplot(aes(x = activity_minute_num, y = avg_ct, group = day_id, color = day)) + 
+  geom_smooth(se = FALSE) +
   labs(
-    title = "24-hour activity time courses for each day of the week over a 5-week period",
+    title = "24-hour activity time counts by day of the week over 35 days",
     x = "Minute Number",
-    y = "Total activity count",
+    y = "Total Activity Count",
     color = "Day") +
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = "right")
 
 avg_accel_data
 ```
-
-On average, the 24-hour time activity increases throughout the day on all days except for Sundays. Fridays have the greatest total activity count towards the end of the day.
-
+On average, the 24-hour time activity increases throughout the day on all days except for one Saturday which has a total activity count of 0. On Wednesdays, on average, the total activity count is higher earlier on in the day.
