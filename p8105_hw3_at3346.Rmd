@@ -44,10 +44,11 @@ instacart %>%
 n_aisle = instacart %>% 
   count(aisle)
 ```
+
 The `instacart` dataset contains `r nrow(instacart)` observations (representing products from orders) of 131209 unique users and `r ncol(instacart)` variables. There is a single order per user in this dataset. Key variables in the `instacart` dataset include `reordered`, which describes if this product has been ordered by this user in the past,`order_dow`, which describes the day of the week on which the order was placed, and
 `order_hour_of_day`, which describes the hour of the day on which the order was placed. For example, `user_id` 18 ordered 2 items (Organic Strawberries and Small Hass Avocado) from the fresh fruits aisle, both of which were reordered items. Another example is that the most ordered items at 11:00 pm from Instacart are "Banana," "Bag of Organic Bananas," "Organic Strawberries," and "Organic Baby Spinach," which is surprising given that I would expect more unhealthy food to be ordered late at night.
 
-There are `r nrow(n_aisle)` total aisles included in the `instacart` dataset. The aisles that the most items are ordered from are "fresh vegetables" (150609 orders) and "fresh fruit" (150473 orders).
+There are `r nrow(n_aisle)` total aisles included in the `instacart` dataset. The aisles that the most items are ordered from are "fresh vegetables" (150609 orders) and "fresh fruits" (150473 orders).
 
 
 ## Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered:
@@ -87,6 +88,8 @@ table_popitems = instacart %>%
 table_popitems %>% 
   knitr::kable()
 ```
+
+
 The three most popular items in each of the aisles are shown in the table in descending order (most popular to least popular).
 
 
@@ -168,6 +171,7 @@ seven_2010 = brfss_smart2010 %>%
   filter(n_loc > 6) %>% 
   arrange(desc(n_loc)) 
 ```
+
 In 2002, CT, FL, MA, NC, NJ, and PA were observed at 7 or more locations. 
 In 2010, CA, CO, FL, MA, MD, NC, NE, NJ, NY, OH, PA, SC, TX, and WA were observed at 7 or more locations. 
 
@@ -249,6 +253,7 @@ accel_data =
     values_to = "activity_counts") %>% 
   mutate(activity_minute_num = as.numeric(activity_minute_num))
 ```
+
 The `accel_data` dataset contains `r nrow(accel_data)` observations and `r ncol(accel_data)` variables. The `r ncol(accel_data)` variables in the dataset are `week`, `day_id`, `day`, `weekend`, `weekday`, `activity_minute_num`, and `activity_counts`.
 
 
@@ -286,6 +291,7 @@ trends_day = tot_act %>%
 trends_day
 
 ```
+
 Overall, there doesn't seem to be any trends apparent. If we want to examine for trends by week, for weeks 1 and 2, the total activity per day (in minutes) is lowest on Mondays, then gradually increases throughout the week into the weekend. In week 3, the total activity per day (in minutes) remains relatively consistent on all days of the week except for Monday, which has the highest total daily activity. For weeks 4 and 5, there is the lowest total daily activity on the weekends.
 
 
@@ -306,4 +312,5 @@ avg_accel_data = accel_data %>%
 
 avg_accel_data
 ```
+
 On average, the 24-hour time activity increases throughout the day on all days except for one Saturday which has a total activity count of 0. On Wednesdays, on average, the total activity count is higher earlier on in the day.
